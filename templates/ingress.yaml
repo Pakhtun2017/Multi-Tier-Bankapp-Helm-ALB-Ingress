@@ -1,29 +1,26 @@
-bankapp:
-  replicas: 1
-
-  image:
-    repository: oolumee/bankapp
-    tag: "3"
-
-  service:
-    type: ClusterIP
-    port: 80
-
-  ingress:
-    enabled: true
-    className: alb
-    hosts:
-      - www.pashtun-verse.com
-    annotations:
-      alb.ingress.kubernetes.io/scheme: internet-facing
-      alb.ingress.kubernetes.io/target-type: ip
-      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
-      alb.ingress.kubernetes.io/target-group-attributes: |
-        stickiness.enabled=true,
-        stickiness.lb_cookie.duration_seconds=172800
-
-  env:
-    datasourceUrl: jdbc:mysql://mysql-service:3306/bankappdb?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: root
-    password: Test@123
+{{- if and .Values.bankapp.ingress .Values.bankapp.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-bankapp-ingress
+  annotations:
+{{- range $key, $value := .Values.bankapp.ingress.annotations }}
+    {{ $key }}: {{ $value | quote }}
+{{- end }}
+spec:
+  ingressClassName: {{ .Values.bankapp.ingress.className }}
+  rules:
+{{- range .Values.bankapp.ingress.hosts }}
+    - host: {{ . }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: bankapp-service
+                port:
+                  number: {{ $.Values.bankapp.service.port }}
+{{- end }}
+{{- end }}
 
