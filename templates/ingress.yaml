@@ -1,0 +1,29 @@
+bankapp:
+  replicas: 1
+
+  image:
+    repository: oolumee/bankapp
+    tag: "3"
+
+  service:
+    type: ClusterIP
+    port: 80
+
+  ingress:
+    enabled: true
+    className: alb
+    hosts:
+      - www.pashtun-verse.com
+    annotations:
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+      alb.ingress.kubernetes.io/target-group-attributes: |
+        stickiness.enabled=true,
+        stickiness.lb_cookie.duration_seconds=172800
+
+  env:
+    datasourceUrl: jdbc:mysql://mysql-service:3306/bankappdb?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: Test@123
+
